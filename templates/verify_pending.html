@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Cek Email Anda{% endblock %}
+{% block content %}
+<div class="card" style="text-align:center;">
+  <h1>📩 Cek Email Anda</h1>
+  <p class="subtitle">
+    Kami telah mengirim email verifikasi ke <b>{{ email }}</b>.<br>
+    Silakan klik tautan verifikasi pada email tersebut sebelum login.
+  </p>
+  <a class="btn" href="{{ url_for('login') }}">Kembali ke Login</a>
+</div>
+{% endblock %}

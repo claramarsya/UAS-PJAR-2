@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>Masuk</h1>
+  <p class="subtitle">Login untuk mengakses fitur upload TCP &amp; streaming UDP.</p>
+  <form method="POST" action="{{ url_for('login') }}">
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email" required placeholder="nama@email.com">
+
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" required placeholder="••••••••">
+
+    <button type="submit">Login</button>
+  </form>
+  <p class="helper-text">Belum punya akun? <a href="{{ url_for('register') }}">Daftar di sini</a></p>
+</div>
+{% endblock %}

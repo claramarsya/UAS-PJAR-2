@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Streaming Video (UDP){% endblock %}
+{% block content %}
+<div class="card">
+  <span class="badge">UDP</span>
+  <h1>Streaming Video</h1>
+  <p class="subtitle">
+    Video dikirim oleh <b>udp_stream/udp_sender.py</b> ke server melalui
+    socket UDP, lalu ditampilkan real-time di bawah ini.
+  </p>
+  <div class="video-wrap">
+    <img src="{{ url_for('video_feed') }}" alt="UDP video stream">
+  </div>
+
+  {% if current_video %}
+  <p class="subtitle" style="margin-top:10px;">Sedang streaming: <b>{{ current_video }}</b></p>
+  {% else %}
+  <p class="subtitle" style="margin-top:10px;">Belum ada video yang di-stream. Upload atau pilih video di bawah.</p>
+  {% endif %}
+
+  <hr style="margin:28px 0;border:none;border-top:1px solid var(--border);">
+
+  <h2>Upload Video Baru</h2>
+  <p class="subtitle">Video akan otomatis mulai di-stream setelah diupload.</p>
+  <form method="POST" action="{{ url_for('stream_upload_video') }}" enctype="multipart/form-data">
+    <label for="video_file">Pilih File Video (.mp4, .avi, .mov, .mkv, .webm)</label>
+    <input type="file" id="video_file" name="video_file" accept="video/*" required>
+    <button type="submit">Upload &amp; Mulai Streaming</button>
+  </form>
+
+  {% if videos %}
+  <h2 style="margin-top:32px;">Atau Pilih Video yang Sudah Ada</h2>
+  <form method="POST" action="{{ url_for('stream_select_video') }}">
+    <label for="video_filename">Daftar Video</label>
+    <select id="video_filename" name="video_filename"
+            style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.95rem;">
+      {% for v in videos %}
+      <option value="{{ v }}" {% if v == current_video %}selected{% endif %}>{{ v }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn-secondary">Tayangkan Video Ini</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

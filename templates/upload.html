@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Upload File (TCP){% endblock %}
+{% block content %}
+<div class="card">
+  <span class="badge">TCP</span>
+  <h1>Upload File</h1>
+  <p class="subtitle">
+    File yang dipilih akan dikirim ke <b>TCP server</b> (tcp_upload/tcp_server.py)
+    menggunakan socket TCP murni, lalu disimpan di server.
+  </p>
+  <form method="POST" action="{{ url_for('upload') }}" enctype="multipart/form-data">
+    <label for="file">Pilih File</label>
+    <input type="file" id="file" name="file" required>
+    <button type="submit">Upload via TCP</button>
+  </form>
+
+  <h2 style="margin-top:32px;">File yang Sudah Diupload</h2>
+  {% if files %}
+  <table>
+    <tr><th>Nama File</th><th>Ukuran</th><th>Waktu Upload</th><th>Aksi</th></tr>
+    {% for f in files %}
+    <tr>
+      <td>{{ f.filename }}</td>
+      <td>{{ (f.filesize / 1024) | round(1) }} KB</td>
+      <td>{{ f.uploaded_at.strftime("%d-%m-%Y %H:%M:%S") }}</td>
+      <td>
+        <a href="{{ url_for('download_file', file_id=f.id) }}">Unduh</a>
+        &nbsp;|&nbsp;
+        <form method="POST" action="{{ url_for('delete_file', file_id=f.id) }}" style="display:inline;"
+              onsubmit="return confirm('Hapus file {{ f.filename }}?');">
+          <button type="submit" style="all:unset;cursor:pointer;color:#dc2626;font-size:0.85rem;">Hapus</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p class="subtitle">Belum ada file yang diupload.</p>
+  {% endif %}
+</div>
+{% endblock %}
