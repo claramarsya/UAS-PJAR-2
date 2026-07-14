@@ -20,8 +20,11 @@ try:
 except ImportError:
     cv2 = None
 
-MAX_DGRAM = 60000  # aman di bawah batas datagram UDP (65507 byte)
+MAX_DGRAM = 60000       # aman di bawah batas datagram UDP (65507 byte)
 TARGET_MAX_WIDTH = 480  # lebar maksimum frame yang dikirim
+JPEG_QUALITY = 50       # kualitas TETAP: pada lebar 480, frame selalu muat 1 datagram,
+                        # jadi kualitas tidak berubah-ubah (menghindari kedip tajam<->buram)
+FPS = 20
 
 
 def resize_keep_aspect_ratio(frame, max_width=TARGET_MAX_WIDTH):
@@ -40,7 +43,7 @@ def resize_keep_aspect_ratio(frame, max_width=TARGET_MAX_WIDTH):
 
 def start_sender(video_source=None, host=None, port=None, loop=True):
     if cv2 is None:
-        print("OpenCV belum terinstall. Jalankan: pip install opencv-python")
+        print("OpenCV belum terinstall. Jalankan: pip install opencv-python-headless")
         return
 
     video_source = video_source or Config.VIDEO_SOURCE
@@ -58,30 +61,37 @@ def start_sender(video_source=None, host=None, port=None, loop=True):
 
     print(f"[UDP] Streaming ke {host}:{port} dari sumber '{video_source}'")
 
+    delay = 1.0 / FPS
+    next_frame_at = time.perf_counter()
+
     try:
         while True:
             ret, frame = cap.read()
             if not ret:
                 if loop and not use_webcam:
                     cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                    next_frame_at = time.perf_counter()
                     continue
                 else:
                     break
 
             frame = resize_keep_aspect_ratio(frame)
-            ok, encoded = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
-            if not ok:
-                continue
-
-            data = encoded.tobytes()
-            if len(data) > MAX_DGRAM:
-                ok, encoded = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 30])
+            ok, encoded = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY])
+            if ok:
                 data = encoded.tobytes()
-                if len(data) > MAX_DGRAM:
-                    continue  # lewati frame yang masih terlalu besar untuk 1 datagram
+                if len(data) <= MAX_DGRAM:
+                    sock.sendto(data, (host, port))
+                # kalau > MAX_DGRAM (sangat jarang di lebar 480): frame ini dilewati
+                # saja. Penerima tetap menampilkan frame terakhir, jadi tidak berkedip.
 
-            sock.sendto(data, (host, port))
-            time.sleep(1 / 20)  # target ~20 fps
+            # Pacing berbasis jam supaya tempo stabil (bukan sleep tetap yang
+            # menumpuk waktu encode -> jadinya patah/tersendat).
+            next_frame_at += delay
+            wait = next_frame_at - time.perf_counter()
+            if wait > 0:
+                time.sleep(wait)
+            else:
+                next_frame_at = time.perf_counter()
     except KeyboardInterrupt:
         pass
     finally:

@@ -121,7 +121,9 @@ def create_app():
             db.session.add(user)
             db.session.commit()
 
-            verify_link = f"{Config.BASE_URL}{url_for('verify_email', token=token)}"
+            # _external=True membuat link absolut dari domain yang sedang diakses,
+            # jadi otomatis benar baik saat lokal maupun setelah deploy (Cloudflare).
+            verify_link = url_for("verify_email", token=token, _external=True)
             ok, info = send_email(
                 Config, email, "Verifikasi Akun - UAS Pemrograman Jaringan",
                 verification_email_body(name, verify_link),
@@ -351,4 +353,7 @@ def create_app():
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    # use_reloader=False: matikan auto-reload Flask. Reloader bisa restart aplikasi
+    # sendiri lalu memulai ulang sender video "default", sementara sender video yang
+    # sedang dipilih jadi proses yatim -> video lama (mis. ghibli) muncul-hilang.
+    app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
